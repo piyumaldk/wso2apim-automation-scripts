@@ -2,6 +2,7 @@
 //
 // Navigate to the WSO2 API Manager Publisher and manually create one sample API 
 // with a random name that does not match any of the APIs being created by this script.
+// Deploying the sample API is fine.
 //
 // Once the sample API is created, go to /publisher/apis and execute the following 
 // script in the browser console to automatically create and publish multiple APIs.
