@@ -5,9 +5,9 @@ from time import sleep
 import base64
 
 # ==================== Configuration Variables ====================
-NAME_PREFIX = 'abc'
+NAME_PREFIX = 'xxs'
 START_NUMBER = 2
-COUNT = 100
+COUNT = 20
 USERNAME = 'admin'
 PASSWORD = 'admin'
 BASE_URL = 'https://localhost:9443/api/am/publisher/v4/apis'
@@ -25,7 +25,7 @@ def get_basic_auth_header(username, password):
         password: Password for authentication
         
     Returns:
-        str: Base64 encoded credentials
+        str: Base64 encoded credentials in Basic Auth format
     """
     credentials = f'{username}:{password}'
     encoded_credentials = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
@@ -152,6 +152,8 @@ def main():
     
     # Generate Basic Auth header
     auth_header = get_basic_auth_header(USERNAME, PASSWORD)
+    print(f'Auth Header: {auth_header}')
+    print('=' * 50)
     
     success_count = 0
     fail_count = 0
