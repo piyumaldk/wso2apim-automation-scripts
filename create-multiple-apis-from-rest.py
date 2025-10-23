@@ -2,25 +2,42 @@ import requests
 import json
 import urllib3
 from time import sleep
+import base64
 
 # ==================== Configuration Variables ====================
 NAME_PREFIX = 'abc'
 START_NUMBER = 2
 COUNT = 100
-BEARER_TOKEN = 'xxx'  # Replace with your actual token
+USERNAME = 'admin'
+PASSWORD = 'admin'
 BASE_URL = 'https://localhost:9443/api/am/publisher/v4/apis'
 # ================================================================
 
 # Disable SSL warnings for localhost (remove in production)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-def create_api(api_name, token):
+def get_basic_auth_header(username, password):
+    """
+    Generate Basic Authentication header value
+    
+    Args:
+        username: Username for authentication
+        password: Password for authentication
+        
+    Returns:
+        str: Base64 encoded credentials
+    """
+    credentials = f'{username}:{password}'
+    encoded_credentials = base64.b64encode(credentials.encode('utf-8')).decode('utf-8')
+    return f'Basic {encoded_credentials}'
+
+def create_api(api_name, auth_header):
     """
     Create a single API using the REST API endpoint
     
     Args:
         api_name: Name of the API to create
-        token: Bearer token for authentication
+        auth_header: Basic authentication header value
         
     Returns:
         tuple: (success: bool, response: dict or None)
@@ -28,7 +45,7 @@ def create_api(api_name, token):
     
     headers = {
         'Content-Type': 'application/json',
-        'Authorization': f'Bearer {token}'
+        'Authorization': auth_header
     }
     
     payload = {
@@ -130,11 +147,11 @@ def main():
     print(f'Name Prefix: {NAME_PREFIX}')
     print(f'Start Number: {START_NUMBER}')
     print(f'Total Count: {COUNT}')
+    print(f'Authentication: Basic Auth ({USERNAME})')
     print('=' * 50)
     
-    if BEARER_TOKEN == '<your-token-here>':
-        print('❌ ERROR: Please set your BEARER_TOKEN in the script!')
-        return
+    # Generate Basic Auth header
+    auth_header = get_basic_auth_header(USERNAME, PASSWORD)
     
     success_count = 0
     fail_count = 0
@@ -146,7 +163,7 @@ def main():
         
         print(f'{i + 1}/{COUNT}', end=' - ', flush=True)
         
-        success, response = create_api(api_name, BEARER_TOKEN)
+        success, response = create_api(api_name, auth_header)
         
         if success:
             success_count += 1
