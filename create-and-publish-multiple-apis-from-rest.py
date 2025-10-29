@@ -5,13 +5,29 @@ from time import sleep
 import base64
 
 # ==================== Configuration Variables ====================
-NAME_PREFIX = 'pro'
-START_NUMBER = 2
-COUNT = 45
+NAME_PREFIX = 'jj_'
+START_NUMBER = 1
+COUNT = 34
 USERNAME = 'admin'
 PASSWORD = 'admin'
-BASE_URL = 'https://localhost:9443/api/am/publisher/v4'
-# ================================================================
+APIM_VERSION = '3.2.1' # Options: '3.2.1', '4.0.0', '4.1.0', '4.2.0', '4.3.0', '4.4.0', '4.5.0'
+# =================================================================
+
+def get_base_url(version: str) -> str:
+    base = 'https://localhost:9443/api/am/publisher'
+    
+    if version == '4.2.0' or version == '4.3.0' or version == '4.4.0' or version == '4.5.0':
+        return f'{base}/v4'
+    elif version == '4.1.0':
+        return f'{base}/v3'
+    elif version == '4.0.0':
+        return f'{base}/v2'
+    elif version == '3.2.1':
+        return f'{base}/v1'
+    else:
+        raise ValueError(f'Unsupported APIM version: {version}')
+
+BASE_URL = get_base_url(APIM_VERSION)
 
 # Disable SSL warnings for localhost (remove in production)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -196,6 +212,39 @@ def publish_api(api_id, auth_header):
     except requests.exceptions.RequestException as e:
         return False, str(e)
 
+def change_lifecycle(api_id, auth_header):
+    """
+    Step 2 (Lower Versions): Change API Lifecycle to Published state
+    
+    Args:
+        api_id: ID of the API
+        auth_header: Basic authentication header value
+        
+    Returns:
+        tuple: (success: bool, error: str or None)
+    """
+    
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': auth_header,
+        'Accept': 'application/json'
+    }
+    
+    try:
+        response = requests.post(
+            f'{BASE_URL}/apis/change-lifecycle?action=Publish&apiId={api_id}',
+            headers=headers,
+            verify=False
+        )
+        
+        if response.status_code in [200, 201]:
+            return True, None
+        else:
+            return False, f"Status {response.status_code}: {response.text}"
+            
+    except requests.exceptions.RequestException as e:
+        return False, str(e)
+
 def create_and_publish_api(api_name, auth_header):
     """
     Complete workflow: Create, Revise, Deploy, and Publish API
@@ -213,20 +262,26 @@ def create_and_publish_api(api_name, auth_header):
     if not success:
         return False, {'step': 'create', 'error': error}
     
-    # Step 2: Create Revision
-    success, revision_id, error = create_revision(api_id, auth_header)
-    if not success:
-        return False, {'step': 'revision', 'error': error, 'api_id': api_id}
+    revision_id = None
     
-    # Step 3: Deploy Revision
-    success, error = deploy_revision(api_id, revision_id, auth_header)
-    if not success:
-        return False, {'step': 'deploy', 'error': error, 'api_id': api_id}
+    if APIM_VERSION != '3.2.1':
+        # Step 2: Create Revision
+        success, revision_id, error = create_revision(api_id, auth_header)
+        if not success:
+            return False, {'step': 'revision', 'error': error, 'api_id': api_id}
+        # Step 3: Deploy Revision
+        success, error = deploy_revision(api_id, revision_id, auth_header)
+        if not success:
+            return False, {'step': 'deploy', 'error': error, 'api_id': api_id}  
+        # Step 4: Publish API
+        success, error = publish_api(api_id, auth_header)
+        if not success:
+            return False, {'step': 'publish', 'error': error, 'api_id': api_id}
+    else:
+        success, error = change_lifecycle(api_id, auth_header)
+        if not success:
+            return False, {'step': 'change-lifecycle', 'error': error, 'api_id': api_id}
     
-    # Step 4: Publish API
-    success, error = publish_api(api_id, auth_header)
-    if not success:
-        return False, {'step': 'publish', 'error': error, 'api_id': api_id}
     
     return True, {'api_id': api_id, 'revision_id': revision_id}
 
