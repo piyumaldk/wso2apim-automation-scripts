@@ -5,7 +5,7 @@ from time import sleep
 import base64
 
 # ==================== Configuration Variables ====================
-NAME_PREFIX = 'relic_'
+NAME_PREFIX = 'relicw_'
 START_NUMBER = 1
 COUNT = 40
 USERNAME = 'admin'
@@ -232,7 +232,7 @@ def create_and_publish_api(api_name, auth_header):
     
     revision_id = None
     
-    if APIM_VERSION != '3.2.1' or APIM_VERSION != '3.2.0':
+    if APIM_VERSION != '3.2.1' and APIM_VERSION != '3.2.0':
         # Step 2: Create Revision
         success, revision_id, error = create_revision(api_id, auth_header)
         if not success:
