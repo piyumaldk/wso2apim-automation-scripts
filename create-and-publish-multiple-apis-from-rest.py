@@ -5,12 +5,12 @@ from time import sleep
 import base64
 
 # ==================== Configuration Variables ====================
-NAME_PREFIX = 'jj_'
+NAME_PREFIX = 'relic_'
 START_NUMBER = 1
-COUNT = 34
+COUNT = 103
 USERNAME = 'admin'
 PASSWORD = 'admin'
-APIM_VERSION = '3.2.1' # Options: '3.2.1', '4.0.0', '4.1.0', '4.2.0', '4.3.0', '4.4.0', '4.5.0'
+APIM_VERSION = '3.2.0' # Options: '3.2.0', '3.2.1', '4.0.0', '4.1.0', '4.2.0', '4.3.0', '4.4.0', '4.5.0'
 # =================================================================
 
 def get_base_url(version: str) -> str:
@@ -22,7 +22,7 @@ def get_base_url(version: str) -> str:
         return f'{base}/v3'
     elif version == '4.0.0':
         return f'{base}/v2'
-    elif version == '3.2.1':
+    elif version == '3.2.1' or version == '3.2.0':
         return f'{base}/v1'
     else:
         raise ValueError(f'Unsupported APIM version: {version}')
@@ -264,7 +264,7 @@ def create_and_publish_api(api_name, auth_header):
     
     revision_id = None
     
-    if APIM_VERSION != '3.2.1':
+    if APIM_VERSION != '3.2.1' or APIM_VERSION != '3.2.0':
         # Step 2: Create Revision
         success, revision_id, error = create_revision(api_id, auth_header)
         if not success:
