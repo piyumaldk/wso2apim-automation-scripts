@@ -7,7 +7,7 @@ import base64
 # ==================== Configuration Variables ====================
 NAME_PREFIX = 'relic_'
 START_NUMBER = 1
-COUNT = 103
+COUNT = 40
 USERNAME = 'admin'
 PASSWORD = 'admin'
 APIM_VERSION = '3.2.0' # Options: '3.2.0', '3.2.1', '4.0.0', '4.1.0', '4.2.0', '4.3.0', '4.4.0', '4.5.0'
@@ -180,41 +180,9 @@ def deploy_revision(api_id, revision_id, auth_header):
     except requests.exceptions.RequestException as e:
         return False, str(e)
 
-def publish_api(api_id, auth_header):
-    """
-    Step 4: Publish API (Change lifecycle to Publish)
-    
-    Args:
-        api_id: ID of the API
-        auth_header: Basic authentication header value
-        
-    Returns:
-        tuple: (success: bool, error: str or None)
-    """
-    
-    headers = {
-        'Authorization': auth_header,
-        'Accept': 'application/json'
-    }
-    
-    try:
-        response = requests.post(
-            f'{BASE_URL}/apis/change-lifecycle?action=Publish&apiId={api_id}',
-            headers=headers,
-            verify=False
-        )
-        
-        if response.status_code in [200, 201]:
-            return True, None
-        else:
-            return False, f"Status {response.status_code}: {response.text}"
-            
-    except requests.exceptions.RequestException as e:
-        return False, str(e)
-
 def change_lifecycle(api_id, auth_header):
     """
-    Step 2 (Lower Versions): Change API Lifecycle to Published state
+    Final Step: Change API Lifecycle to Published state
     
     Args:
         api_id: ID of the API
@@ -273,14 +241,11 @@ def create_and_publish_api(api_name, auth_header):
         success, error = deploy_revision(api_id, revision_id, auth_header)
         if not success:
             return False, {'step': 'deploy', 'error': error, 'api_id': api_id}  
-        # Step 4: Publish API
-        success, error = publish_api(api_id, auth_header)
-        if not success:
-            return False, {'step': 'publish', 'error': error, 'api_id': api_id}
-    else:
-        success, error = change_lifecycle(api_id, auth_header)
-        if not success:
-            return False, {'step': 'change-lifecycle', 'error': error, 'api_id': api_id}
+
+    # Final Step: Publish API
+    success, error = change_lifecycle(api_id, auth_header)
+    if not success:
+        return False, {'step': 'change-lifecycle', 'error': error, 'api_id': api_id}
     
     
     return True, {'api_id': api_id, 'revision_id': revision_id}
